@@ -97,6 +97,7 @@ if col_voice is None:
 # TODO: add dymanisation of possible voices, and availability codes/labels
 
 # Preprocess data:
+# TODO: add sanity checks (int everything, invalid values?, fillna etc.)
 df[col_voice] = pd.Categorical(
     df[col_voice],
     categories=VOICES_ORDERED,
