@@ -98,7 +98,7 @@ if col_voice is None:
 
 # Preprocess data:
 df[col_voice] = pd.Categorical(
-    df["voice"],
+    df[col_voice],
     categories=VOICES_ORDERED,
     ordered=True,
 )
