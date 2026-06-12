@@ -1,5 +1,9 @@
 # virtual environment
-.venv
+.venv/
 
 # PyCharm
-.idea
+.idea/
+
+# Coverage output
+.coverage
+htmlcov/
