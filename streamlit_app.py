@@ -16,6 +16,10 @@ from const import (
     SESSION_STATE_MIN_DATES_FIT_CRITERIA,
     VOICE_GROUPS,
     COUNT_COL,
+    DEFAULT_MIN_AVAILABILITY_VALUE,
+    DEFAULT_MAX_AVAILABILITY_VALUE,
+    DEFAULT_DEFAULT_AVAILABILITY_VALUE,
+    DEFAULT_AVAILABILITY_LABELS,
 )
 from utils import colour_availability
 
@@ -125,7 +129,14 @@ except ValueError:
     )
     st.stop()
 
-# TODO: check values in date_cols are in expected range of availability values
+if (df[cols_date] > DEFAULT_MAX_AVAILABILITY_VALUE).any().any() or (
+    df[cols_date] < DEFAULT_MIN_AVAILABILITY_VALUE
+).any().any():
+    st.error(
+        f"Availability values must be between {DEFAULT_MIN_AVAILABILITY_VALUE} and {DEFAULT_MAX_AVAILABILITY_VALUE} (both inclusive). Please prepare CSV data accordingly!"
+    )
+    st.stop()
+
 df[col_voice] = pd.Categorical(
     df[col_voice],
     categories=VOICES_ORDERED,
@@ -140,9 +151,15 @@ comments: pd.Series | None = df[col_comment] if col_comment is not None else Non
 # Main page:
 st.header("Choose filters")
 min_availability_required = st.slider(
-    "Minimum availability required", min_value=1, max_value=4, value=3
+    "Minimum availability required",
+    min_value=DEFAULT_MIN_AVAILABILITY_VALUE,
+    max_value=DEFAULT_MAX_AVAILABILITY_VALUE,
+    value=DEFAULT_DEFAULT_AVAILABILITY_VALUE,
+    help=f"Possible values: {', '.join(f'{key}: {val}' for key, val in DEFAULT_AVAILABILITY_LABELS.items())}",
 )
 date_selection = st.multiselect("Filter for dates", cols_date, default=cols_date)
+date_selection = [date for date in cols_date if date in date_selection]
+
 if SESSION_STATE_MIN_DATES_FIT_CRITERIA not in st.session_state:
     setattr(st.session_state, SESSION_STATE_MIN_DATES_FIT_CRITERIA, 1)
 setattr(
