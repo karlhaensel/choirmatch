@@ -94,7 +94,8 @@ cols_date = st.sidebar.multiselect(
 for col in (col_name, col_voice, col_comment):
     if col in cols_date:
         st.warning(
-            f"Column {col} cannot be a special column (name/voice/comment) AND a date column. Chose only one!"
+            f"Column {col} cannot be a special column (name/voice/comment) "
+            f"AND a date column. Chose only one!"
         )
         st.stop()
 
@@ -112,7 +113,8 @@ basic_cols = (
 )
 if len(list(set(basic_cols))) != len(basic_cols):
     st.warning(
-        "Special columns (name/voice/comment) must be different from each other. Use every column only once!"
+        "Special columns (name/voice/comment) must be different from each other. "
+        "Use every column only once!"
     )
     st.stop()
 
@@ -125,7 +127,8 @@ try:
     df[cols_date] = df[cols_date].astype(int)
 except ValueError:
     st.warning(
-        "Could not read in availabilites as integer values. Check source and/or choice of date columns!"
+        "Could not read in availabilites as integer values. "
+        "Check source and/or choice of date columns!"
     )
     st.stop()
 
@@ -133,7 +136,9 @@ if (df[cols_date] > DEFAULT_MAX_AVAILABILITY_VALUE).any().any() or (
     df[cols_date] < DEFAULT_MIN_AVAILABILITY_VALUE
 ).any().any():
     st.error(
-        f"Availability values must be between {DEFAULT_MIN_AVAILABILITY_VALUE} and {DEFAULT_MAX_AVAILABILITY_VALUE} (both inclusive). Please prepare CSV data accordingly!"
+        f"Availability values must be between {DEFAULT_MIN_AVAILABILITY_VALUE} "
+        f"and {DEFAULT_MAX_AVAILABILITY_VALUE} (both inclusive). "
+        f"Please prepare CSV data accordingly!"
     )
     st.stop()
 
@@ -155,7 +160,8 @@ min_availability_required = st.slider(
     min_value=DEFAULT_MIN_AVAILABILITY_VALUE,
     max_value=DEFAULT_MAX_AVAILABILITY_VALUE,
     value=DEFAULT_DEFAULT_AVAILABILITY_VALUE,
-    help=f"Possible values: {', '.join(f'{key}: {val}' for key, val in DEFAULT_AVAILABILITY_LABELS.items())}",
+    help=f"Possible values: "
+    f"{', '.join(f'{k}: {v}' for k, v in DEFAULT_AVAILABILITY_LABELS.items())}",
 )
 date_selection = st.multiselect("Filter for dates", cols_date, default=cols_date)
 date_selection = [date for date in cols_date if date in date_selection]
@@ -255,7 +261,8 @@ if len(date_selection) > 0:
     text.extend(
         [
             "",
-            f"TOTAL for set filters: {len(display_df)} ({len(display_df) / len(df):.1%})",
+            f"TOTAL for set filters: {len(display_df)} "
+            f"({len(display_df) / len(df):.1%})",
             "\n",
         ]
     )
