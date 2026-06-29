@@ -9,20 +9,18 @@ DEFAULT_COMMENT_COL = "comment"
 COUNT_COL = "count"
 
 
-# TODO: change to English naming?
-
 VOICES_ORDERED = (
-    "Sopran 1",
-    "Sopran 2",
-    "Alt 1",
-    "Alt 2",
+    "Soprano 1",
+    "Soprano 2",
+    "Alto 1",
+    "Alto 2",
     "Tenor 1",
     "Tenor 2",
     "Bass 1",
     "Bass 2",
 )
 
-VOICE_GROUPS = ("Sopran", "Alt", "Tenor", "Bass")
+VOICE_GROUPS = ("Soprano", "Alto", "Tenor", "Bass")
 
 DEFAULT_MIN_AVAILABILITY_VALUE = 1
 DEFAULT_MAX_AVAILABILITY_VALUE = 4
