@@ -4,6 +4,8 @@
 # TODO: try to modularise more
 # TODO: add more documentation
 
+import itertools
+
 import pandas as pd
 import streamlit as st
 
@@ -20,6 +22,17 @@ from const import (
     DEFAULT_MAX_AVAILABILITY_VALUE,
     DEFAULT_DEFAULT_AVAILABILITY_VALUE,
     DEFAULT_AVAILABILITY_LABELS,
+    DE_S,
+    EN_S,
+    EN_A,
+    DE_A,
+    EN_T,
+    DE_T,
+    EN_B,
+    DE_B,
+    EN_UNKNOWN,
+    DE_UNKNOWN,
+    SUBGROUP_SUFFICES,
 )
 from utils import colour_availability
 
@@ -27,69 +40,107 @@ from utils import colour_availability
 st.title(":green[ChoirMatch]")
 
 # Start sidebar
-st.sidebar.header("Input and options")
+with st.sidebar:
+    st.sidebar.header("Input and options")
+    side_tab1, side_tab2 = st.tabs(["Input and Column choice", "Mapping"])
 
-# Organise CSV input:
-st.sidebar.subheader("CSV input")
-input_file = st.sidebar.file_uploader(
-    "Upload a CSV file containing choir availability feedback.",
-    type=["csv"],
-    help="CSV file should have three columns for name, voice, and comment "
-    "(comment can be empty, others not). "
-    "All other columns are considered date columns to chose from later on.",
-)
+    with side_tab1:
+        # Organise CSV input:
+        st.subheader("CSV input")
+        input_file = st.file_uploader(
+            "Upload a CSV file containing choir availability feedback.",
+            type=["csv"],
+            help="CSV file should have three columns for name, voice, and comment "
+            "(comment can be empty, others not). "
+            "All other columns are considered date columns to chose from later on.",
+        )
 
-csv_separator = st.sidebar.selectbox(
-    "CSV seperator character", options=[",", ";"], index=0
-)
-if input_file is None:
-    st.info("Please upload a CSV file in the sidebar to the left.")
-    st.stop()
+        csv_separator = st.selectbox(
+            "CSV seperator character", options=[",", ";"], index=0
+        )
+    if input_file is None:
+        st.info("Please upload a CSV file!")
+        st.stop()
 
-# Import CSV:
-try:
-    df: pd.DataFrame = pd.read_csv(input_file, sep=csv_separator)
-except pd.errors.ParserError:
-    st.warning(
-        f"Could not load data from file with separator '{csv_separator}'. "
-        "Choose another seperator character or CSV file source."
+    # Import CSV:
+    try:
+        df: pd.DataFrame = pd.read_csv(input_file, sep=csv_separator)
+    except pd.errors.ParserError:
+        st.warning(
+            f"Could not load data from file with separator '{csv_separator}'. "
+            "Choose another seperator character or CSV file source."
+        )
+        st.stop()
+
+    # Data columns options:
+    with side_tab1:
+        st.subheader("Data columns")
+    column_choice = list(df.columns)
+
+    name_idx = (
+        column_choice.index(DEFAULT_NAME_COL)
+        if DEFAULT_NAME_COL in column_choice
+        else None
     )
-    st.stop()
+    voice_idx = (
+        column_choice.index(DEFAULT_VOICE_COL)
+        if DEFAULT_VOICE_COL in column_choice
+        else None
+    )
+    comment_idx = (
+        column_choice.index(DEFAULT_COMMENT_COL)
+        if DEFAULT_COMMENT_COL in column_choice
+        else None
+    )
 
-# Data columns options:
-st.sidebar.subheader("Data columns")
-column_choice = list(df.columns)
+    with side_tab1:
+        col_name = st.selectbox(
+            "Column for singers' names:", column_choice, index=name_idx
+        )
+        col_voice = st.selectbox(
+            "Column for singers' voices:", column_choice, index=voice_idx
+        )
+        col_comment = st.selectbox(
+            "Column for singers' comments:", column_choice, index=comment_idx
+        )
+        cols_date = st.multiselect(
+            "Columns of possible dates:",
+            column_choice,
+            default=[
+                col
+                for col in column_choice
+                if col not in [col_name, col_voice, col_comment]
+            ],
+        )
 
-name_idx = (
-    column_choice.index(DEFAULT_NAME_COL) if DEFAULT_NAME_COL in column_choice else None
-)
-voice_idx = (
-    column_choice.index(DEFAULT_VOICE_COL)
-    if DEFAULT_VOICE_COL in column_choice
-    else None
-)
-comment_idx = (
-    column_choice.index(DEFAULT_COMMENT_COL)
-    if DEFAULT_COMMENT_COL in column_choice
-    else None
-)
-
-col_name = st.sidebar.selectbox(
-    "Column for singers' names:", column_choice, index=name_idx
-)
-col_voice = st.sidebar.selectbox(
-    "Column for singers' voices:", column_choice, index=voice_idx
-)
-col_comment = st.sidebar.selectbox(
-    "Column for singers' comments:", column_choice, index=comment_idx
-)
-cols_date = st.sidebar.multiselect(
-    "Columns of possible dates:",
-    column_choice,
-    default=[
-        col for col in column_choice if col not in [col_name, col_voice, col_comment]
-    ],
-)
+    with side_tab2:
+        st.subheader("Voice names")
+        translate_voices = st.checkbox("Custom voice group names", value=False)
+        v_unknown: str
+        voice_groups: tuple[str, ...]
+        voices_ordered: tuple[str, ...]
+        if translate_voices:
+            v_soprano = str(st.text_input(f"{EN_S}:", value=DE_S)).strip()
+            v_alto = str(st.text_input(f"{EN_A}:", value=DE_A)).strip()
+            v_tenor = str(st.text_input(f"{EN_T}:", value=DE_T)).strip()
+            v_bass = str(st.text_input(f"{EN_B}:", value=DE_B)).strip()
+            v_unknown = str(st.text_input(f"{EN_UNKNOWN}:", value=DE_UNKNOWN)).strip()
+            voice_groups = tuple([v_soprano, v_alto, v_tenor, v_bass, v_unknown])
+            voices_ordered = tuple(
+                [
+                    *(
+                        f"{group} {num}"
+                        for group, num in itertools.product(
+                            voice_groups[:-1], SUBGROUP_SUFFICES
+                        )
+                    ),
+                    v_unknown,
+                ]
+            )
+        else:
+            v_unknown = EN_UNKNOWN
+            voice_groups = VOICE_GROUPS
+            voices_ordered = tuple([*VOICES_ORDERED, v_unknown])
 
 for col in (col_name, col_voice, col_comment):
     if col in cols_date:
@@ -118,11 +169,10 @@ if len(list(set(basic_cols))) != len(basic_cols):
     )
     st.stop()
 
-# TODO: add dymanisation of possible voices, and availability codes/labels
+# TODO: add dymanisation of availability codes/labels
 
 # Preprocess data:
 # TODO: check names and comments are strings/able
-# TODO: check voices are voicable
 try:
     df[cols_date] = df[cols_date].astype(int)
 except ValueError:
@@ -144,9 +194,21 @@ if (df[cols_date] > DEFAULT_MAX_AVAILABILITY_VALUE).any().any() or (
 
 df[col_voice] = pd.Categorical(
     df[col_voice],
-    categories=VOICES_ORDERED,
+    categories=voices_ordered,
     ordered=True,
 )
+df[col_voice] = df[col_voice].fillna(v_unknown)  # Set NA to unknown.
+if df[col_voice].isna().all():
+    st.error(
+        "No voice could be categorised. "
+        'Check input file and/or adjust voice mapping in sidebar tab "Mapping".'
+    )
+    st.stop()
+if (df[col_voice] == v_unknown).mean() > 0.5:
+    st.warning(
+        "Half of voice values were categorised as unknown. "
+        'Check input file and/or adjust voice mapping in sidebar tab "Mapping".'
+    )
 
 cols_to_use = [*basic_cols, *cols_date]
 df = df[cols_to_use].reset_index(drop=True).set_index(col_name)
@@ -185,7 +247,7 @@ if len(date_selection) > 0:
         key=SESSION_STATE_MIN_DATES_FIT_CRITERIA,
     )
 filter_voices = st.multiselect(
-    "Filter for voice groups", options=VOICES_ORDERED, default=VOICES_ORDERED
+    "Filter for voice groups", options=voices_ordered, default=voices_ordered
 )
 
 # Start displaying data:
@@ -267,7 +329,7 @@ if len(date_selection) > 0:
         ]
     )
 
-    for voice in VOICES_ORDERED:
+    for voice in voices_ordered:
         names = display_df[display_df[col_voice] == voice].index.tolist()
         text.append(f"{voice} ({len(names)}):")
         if names:
@@ -286,12 +348,12 @@ if len(date_selection) > 0:
 # Display voice statistics for filtered data
 st.header("Summary per voice groups")
 detail_counts = (
-    display_df[col_voice].value_counts().reindex(VOICES_ORDERED).fillna(0).astype(int)
+    display_df[col_voice].value_counts().reindex(voices_ordered).fillna(0).astype(int)
 )
 
 summary = {}
 
-for group in VOICE_GROUPS:
+for group in [*voice_groups, v_unknown]:
     summary[group] = display_df[col_voice].str.startswith(group).sum()
 
 sum_col1, sum_col2 = st.columns(2)

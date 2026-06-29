@@ -1,5 +1,7 @@
 """Constants for data and streamlit app."""
 
+import itertools
+
 DEFAULT_MISSING_COMMENT_VALUE = "kA"
 
 DEFAULT_NAME_COL = "name"
@@ -9,18 +11,24 @@ DEFAULT_COMMENT_COL = "comment"
 COUNT_COL = "count"
 
 
-VOICES_ORDERED = (
-    "Soprano 1",
-    "Soprano 2",
-    "Alto 1",
-    "Alto 2",
-    "Tenor 1",
-    "Tenor 2",
-    "Bass 1",
-    "Bass 2",
-)
+EN_S = "Soprano"
+EN_A = "Alto"
+EN_T = "Tenor"
+EN_B = "Bass"
+EN_UNKNOWN = "Unknown"
+DE_S = "Sopran"
+DE_A = "Alt"
+DE_T = "Tenor"
+DE_B = "Bass"
+DE_UNKNOWN = "Unbekannt"
 
-VOICE_GROUPS = ("Soprano", "Alto", "Tenor", "Bass")
+VOICE_GROUPS = (EN_S, EN_A, EN_T, EN_B)
+SUBGROUP_SUFFICES = (1, 2)
+
+VOICES_ORDERED = tuple(
+    f"{group} {num}"
+    for group, num in itertools.product(VOICE_GROUPS, SUBGROUP_SUFFICES)
+)
 
 DEFAULT_MIN_AVAILABILITY_VALUE = 1
 DEFAULT_MAX_AVAILABILITY_VALUE = 4
